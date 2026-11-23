@@ -3,58 +3,27 @@ package com.devhub.service;
 import com.devhub.domain.Article;
 import com.devhub.domain.dto.ArticleDTOs.*;
 import com.devhub.repository.ArticleRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ArticleService {
 
-    private final ArticleRepository articleRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final DocumentIngestionService documentIngestionService;
+    private final ArticleRepository repository;
 
-    public ArticleResponseDTO createArticle(ArticleRequestDTO dto) {
-        Article article = Article.builder()
-                .title(dto.title())
-                .content(dto.content())
-                .author(dto.author())
-                .tags(dto.tags())
-                .build();
-
-        Article saved = articleRepository.save(article);
-
-        // Ingestão no Vector DB (pgvector)
-        documentIngestionService.ingestArticle(saved);
-
-        // Publica evento Kafka
-        ArticleCreatedEvent event = new ArticleCreatedEvent(saved.getId(), saved.getTitle(), saved.getAuthor());
-        kafkaTemplate.send("article-created-topic", saved.getId().toString(), event);
-
-        return mapToDTO(saved);
+    public ArticleService(ArticleRepository repository) {
+        this.repository = repository;
     }
 
-    public List<ArticleResponseDTO> getAllArticles() {
-        return articleRepository.findAll().stream().map(this::mapToDTO).toList();
+    public ArticleResponseDTO create(ArticleRequestDTO dto) {
+        Article article = new Article(dto.title(), dto.content(), dto.author(), dto.tags());
+        Article saved = repository.save(article);
+        return new ArticleResponseDTO(saved.getId(), saved.getTitle(), saved.getContent(), saved.getAuthor(), saved.getTags(), saved.getCreatedAt());
     }
 
-    public ArticleResponseDTO getArticleById(Long id) {
-        Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Artigo não encontrado com ID: " + id));
-        return mapToDTO(article);
-    }
-
-    private ArticleResponseDTO mapToDTO(Article article) {
-        return new ArticleResponseDTO(
-                article.getId(),
-                article.getTitle(),
-                article.getContent(),
-                article.getAuthor(),
-                article.getTags(),
-                article.getCreatedAt()
-        );
+    public List<ArticleResponseDTO> findAll() {
+        return repository.findAll().stream()
+                .map(a -> new ArticleResponseDTO(a.getId(), a.getTitle(), a.getContent(), a.getAuthor(), a.getTags(), a.getCreatedAt()))
+                .toList();
     }
 }

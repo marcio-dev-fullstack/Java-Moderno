@@ -3,10 +3,9 @@ kind: Service
 metadata:
   name: dev-knowledge-ai-hub-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
   selector:
     app: dev-knowledge-ai-hub
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080

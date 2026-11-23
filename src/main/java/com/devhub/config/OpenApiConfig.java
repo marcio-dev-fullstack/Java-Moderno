@@ -2,7 +2,6 @@ package com.devhub.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -14,20 +13,10 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
-                .info(new Info()
-                        .title("Dev Knowledge AI Hub API")
-                        .version("1.0.0")
-                        .description("API para gestão de conhecimento, processamento assíncrono com Kafka e RAG com Spring AI + JWT Security.")
-                        .contact(new Contact().name("Engenharia de Software").email("dev@knowledge.hub")))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                .components(new Components()
-                        .addSecuritySchemes(securitySchemeName,
-                                new SecurityScheme()
-                                        .name(securitySchemeName)
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                .info(new Info().title("Dev Knowledge AI Hub").version("1.0.0").description("API com Spring AI, Ollama RAG, Kafka e JWT"))
+                .addSecurityItem(new SecurityRequirement().addList("BearerAuth"))
+                .components(new Components().addSecuritySchemes("BearerAuth",
+                        new SecurityScheme().name("BearerAuth").type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")));
     }
 }

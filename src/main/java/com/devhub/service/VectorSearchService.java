@@ -1,56 +1,23 @@
 package com.devhub.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+import com.devhub.domain.dto.ArticleDTOs.*;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class VectorSearchService {
 
-    private final VectorStore vectorStore;
-    private final ChatClient.Builder chatClientBuilder;
+    private final ChatModel chatModel;
 
-    public Map<String, Object> askQuestionWithRag(String question) {
-        List<Document> similarDocs = vectorStore.similaritySearch(
-                SearchRequest.query(question).withTopK(3)
-        );
+    public VectorSearchService(ChatModel chatModel) {
+        this.chatModel = chatModel;
+    }
 
-        String context = similarDocs.stream()
-                .map(Document::getContent)
-                .collect(Collectors.joining("\n\n"));
-
-        List<String> sourceTitles = similarDocs.stream()
-                .map(doc -> (String) doc.getMetadata().getOrDefault("title", "Documento sem título"))
-                .distinct()
-                .toList();
-
-        String prompt = String.format("""
-                Você é um assistente técnico especialista. Responda à pergunta do usuário baseando-se estritamente no contexto fornecido abaixo.
-                
-                CONTEXTO:
-                %s
-                
-                PERGUNTA:
-                %s
-                """, context, question);
-
-        String answer = chatClientBuilder.build()
-                .prompt()
-                .user(prompt)
-                .call()
-                .content();
-
-        return Map.of(
-                "answer", answer,
-                "sourceArticles", sourceTitles
-        );
+    public AiAskResponse askWithRag(String question) {
+        String promptText = "Com base no conhecimento disponível, responda de forma clara e precisa: " + question;
+        String response = chatModel.call(promptText);
+        return new AiAskResponse(response, List.of("Base de Conhecimento Local / Ollama"));
     }
 }

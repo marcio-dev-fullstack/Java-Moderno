@@ -1,22 +1,14 @@
-server:
-  port: 8080
-
 spring:
   application:
     name: dev-knowledge-ai-hub
   threads:
     virtual:
       enabled: true
-
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:devhubdb}
-    username: ${DB_USER:devhub}
-    password: ${DB_PASS:devhub123}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/devhubdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgrespassword}
     driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -24,41 +16,23 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: devhub-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:demo-key}
-      embedding:
-        options:
-          model: text-embedding-ada-002
+    ollama:
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
       chat:
         options:
-          model: gpt-4o-mini
+          model: llama3.2
           temperature: 0.7
+      embedding:
+        options:
+          model: nomic-embed-text
 
-security:
+app:
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-    expiration-ms: 86400000 # 24 horas
+    secret: 9a2f8c4e7b1d3f5a6b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a
+    expiration-ms: 86400000
 
 management:
   endpoints:
@@ -68,10 +42,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha

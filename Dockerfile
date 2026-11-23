@@ -1,14 +1,13 @@
-# --- Estágio 1: Build ---
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN ./mvnw clean package -DskipTests || mvn clean package -DskipTests
+COPY mvnw .
+COPY .mvn ./.mvn
+RUN chmod +x ./mvnw && ./mvnw clean package -DskipTests
 
-# --- Estágio 2: Runtime Minimalista ---
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
-
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-Dspring.threads.virtual.enabled=true", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

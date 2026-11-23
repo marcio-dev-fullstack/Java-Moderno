@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dev-knowledge-ai-hub
-  labels:
-    app: dev-knowledge-ai-hub
 spec:
   replicas: 2
   selector:
@@ -15,23 +13,13 @@ spec:
         app: dev-knowledge-ai-hub
     spec:
       containers:
-      - name: app
+      - name: dev-knowledge-ai-hub
         image: dev-knowledge-ai-hub:latest
         ports:
         - containerPort: 8080
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "prod"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1024Mi"
-            cpu: "1000m"
-        readinessProbe:
+        livenessProbe:
           httpGet:
-            path: /actuator/health/readiness
+            path: /actuator/health
             port: 8080
-          initialDelaySeconds: 15
+          initialDelaySeconds: 30
           periodSeconds: 10

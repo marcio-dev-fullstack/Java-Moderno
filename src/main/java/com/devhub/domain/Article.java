@@ -1,18 +1,11 @@
 package com.devhub.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "articles")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Article {
 
     @Id
@@ -30,11 +23,21 @@ public class Article {
     @ElementCollection
     private List<String> tags;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+    public Article() {}
+
+    public Article(String title, String content, String author, List<String> tags) {
+        this.title = title;
+        this.content = content;
+        this.author = author;
+        this.tags = tags;
     }
+
+    public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public String getContent() { return content; }
+    public String getAuthor() { return author; }
+    public List<String> getTags() { return tags; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }

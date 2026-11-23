@@ -1,4 +1,4 @@
-package com.devhub.domain;
+package com.devhub;
 
 public enum Role {
     ROLE_USER,

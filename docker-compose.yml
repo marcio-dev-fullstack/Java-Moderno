@@ -1,22 +1,35 @@
 version: '3.8'
 
 services:
+  app:
+    build: .
+    container_name: devhub-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/devhubdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgrespassword
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+      - ollama
+
   postgres:
     image: pgvector/pgvector:pg16
     container_name: devhub-postgres
-    environment:
-      POSTGRES_DB: devhub_db
-      POSTGRES_USER: devhub_user
-      POSTGRES_PASSWORD: devhub_password
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_DB: devhubdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devhub_user -d devhub_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -25,17 +38,14 @@ services:
       - "6379:6379"
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.0
+    image: confluentinc/cp-zookeeper:7.5.0
     container_name: devhub-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    image: confluentinc/cp-kafka:7.5.0
     container_name: devhub-kafka
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
     environment:
@@ -46,5 +56,15 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: devhub-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: always
+
 volumes:
-  pgdata:
+  postgres_data:
+  ollama_data:
