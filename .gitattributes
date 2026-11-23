@@ -1,0 +1,24 @@
+# Padroniza quebras de linha como LF para todo texto por padrão
+* text=auto eol=lf
+
+# Garante LF explicitamente para código Java, configs, scripts e Docker
+*.java text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+*.tf text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+mvnw text eol=lf
+Dockerfile text eol=lf
+
+# Scripts exclusivos de Windows mantêm CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Arquivos binários não devem ser alterados
+*.jar binary
+*.png binary
+*.jpg binary
