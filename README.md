@@ -1,4 +1,4 @@
-# Dev Knowledge AI Hub (v3) — Guia de Arquitetura e Implementação com Segurança JWT
+# Guia de Arquitetura e Implementação com Segurança JWT
 
 ## 1. Visão Geral e Alinhamento com o Guia do Engenheiro Java Moderno
 
