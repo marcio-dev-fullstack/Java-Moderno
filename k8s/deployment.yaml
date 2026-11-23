@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-knowledge-ai-hub
+  labels:
+    app: dev-knowledge-ai-hub
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dev-knowledge-ai-hub
+  template:
+    metadata:
+      labels:
+        app: dev-knowledge-ai-hub
+    spec:
+      containers:
+      - name: app
+        image: dev-knowledge-ai-hub:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1024Mi"
+            cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
