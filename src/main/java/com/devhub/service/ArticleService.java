@@ -1,44 +1,60 @@
 package com.devhub.service;
 
 import com.devhub.domain.Article;
-import com.devhub.domain.ArticleCreatedEvent;
-import com.devhub.domain.ArticleRequestDTO;
-import com.devhub.domain.ArticleResponseDTO;
+import com.devhub.domain.dto.ArticleDTOs.*;
 import com.devhub.repository.ArticleRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-    private final ArticleEventProducer eventProducer;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final DocumentIngestionService documentIngestionService;
 
-    public ArticleService(ArticleRepository articleRepository, ArticleEventProducer eventProducer) {
-        this.articleRepository = articleRepository;
-        this.eventProducer = eventProducer;
-    }
-
-    @Transactional
     public ArticleResponseDTO createArticle(ArticleRequestDTO dto) {
-        Article article = new Article(dto.title(), dto.content(), dto.category());
+        Article article = Article.builder()
+                .title(dto.title())
+                .content(dto.content())
+                .author(dto.author())
+                .tags(dto.tags())
+                .build();
+
         Article saved = articleRepository.save(article);
 
-        // Dispara evento Kafka assíncrono (Etapa 3 - Mensageria)
-        eventProducer.sendArticleCreatedEvent(
-            new ArticleCreatedEvent(saved.getId(), saved.getTitle(), saved.getCategory())
-        );
+        // Ingestão no Vector DB (pgvector)
+        documentIngestionService.ingestArticle(saved);
 
-        return ArticleResponseDTO.fromEntity(saved);
+        // Publica evento Kafka
+        ArticleCreatedEvent event = new ArticleCreatedEvent(saved.getId(), saved.getTitle(), saved.getAuthor());
+        kafkaTemplate.send("article-created-topic", saved.getId().toString(), event);
+
+        return mapToDTO(saved);
     }
 
-    @Transactional(readOnly = true)
-    public List<ArticleResponseDTO> listAllArticles() {
-        // Uso declarativo da API de Streams (Etapa 1 - Core Java)
-        return articleRepository.findAll().stream()
-                .map(ArticleResponseDTO::fromEntity)
-                .toList();
+    public List<ArticleResponseDTO> getAllArticles() {
+        return articleRepository.findAll().stream().map(this::mapToDTO).toList();
+    }
+
+    public ArticleResponseDTO getArticleById(Long id) {
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Artigo não encontrado com ID: " + id));
+        return mapToDTO(article);
+    }
+
+    private ArticleResponseDTO mapToDTO(Article article) {
+        return new ArticleResponseDTO(
+                article.getId(),
+                article.getTitle(),
+                article.getContent(),
+                article.getAuthor(),
+                article.getTags(),
+                article.getCreatedAt()
+        );
     }
 }

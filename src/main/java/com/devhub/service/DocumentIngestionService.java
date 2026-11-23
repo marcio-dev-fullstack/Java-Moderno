@@ -1,5 +1,7 @@
 package com.devhub.service;
 
+import com.devhub.domain.Article;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -9,26 +11,20 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class DocumentIngestionService {
 
     private final VectorStore vectorStore;
 
-    public DocumentIngestionService(VectorStore vectorStore) {
-        this.vectorStore = vectorStore;
-    }
+    public void ingestArticle(Article article) {
+        Document doc = new Document(
+                article.getContent(),
+                Map.of("articleId", article.getId(), "title", article.getTitle(), "author", article.getAuthor() != null ? article.getAuthor() : "Desconhecido")
+        );
 
-    public void ingestArticle(String articleId, String title, String content, String author) {
-        Document rawDoc = new Document(content, Map.of(
-                "articleId", articleId,
-                "title", title,
-                "author", author
-        ));
+        TokenTextSplitter textSplitter = new TokenTextSplitter();
+        List<Document> splitDocs = textSplitter.apply(List.of(doc));
 
-        // Token-based Chunking (Split into manageable chunks for embeddings)
-        TokenTextSplitter splitter = new TokenTextSplitter(800, 350, 5, 10000, true);
-        List<Document> chunks = splitter.apply(List.of(rawDoc));
-
-        // Index in Vector DB (pgvector)
-        vectorStore.accept(chunks);
+        vectorStore.accept(splitDocs);
     }
 }

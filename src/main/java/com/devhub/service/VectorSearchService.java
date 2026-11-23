@@ -1,5 +1,6 @@
 package com.devhub.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -7,51 +8,49 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class VectorSearchService {
 
     private final VectorStore vectorStore;
-    private final ChatClient chatClient;
+    private final ChatClient.Builder chatClientBuilder;
 
-    public VectorSearchService(VectorStore vectorStore, ChatClient.Builder chatClientBuilder) {
-        this.vectorStore = vectorStore;
-        this.chatClient = chatClientBuilder.build();
-    }
+    public Map<String, Object> askQuestionWithRag(String question) {
+        List<Document> similarDocs = vectorStore.similaritySearch(
+                SearchRequest.query(question).withTopK(3)
+        );
 
-    public List<Document> searchSimilar(String query, int topK, double threshold) {
-        SearchRequest request = SearchRequest.query(query)
-                .withTopK(topK)
-                .withSimilarityThreshold(threshold);
+        String context = similarDocs.stream()
+                .map(Document::getContent)
+                .collect(Collectors.joining("\n\n"));
 
-        return vectorStore.similaritySearch(request);
-    }
+        List<String> sourceTitles = similarDocs.stream()
+                .map(doc -> (String) doc.getMetadata().getOrDefault("title", "Documento sem título"))
+                .distinct()
+                .toList();
 
-    public String askWithRagContext(String userQuestion) {
-        List<Document> similarDocs = searchSimilar(userQuestion, 5, 0.7);
-        
-        StringBuilder context = new StringBuilder();
-        for (Document doc : similarDocs) {
-            context.append(doc.getContent()).append("\n---");
-        }
+        String prompt = String.format("""
+                Você é um assistente técnico especialista. Responda à pergunta do usuário baseando-se estritamente no contexto fornecido abaixo.
+                
+                CONTEXTO:
+                %s
+                
+                PERGUNTA:
+                %s
+                """, context, question);
 
-        String promptTemplate = """
-                Você é o assistente técnico especialista do Dev Knowledge Hub.
-                Responda à dúvida do usuário baseando-se estritamente no contexto técnico fornecido abaixo.
-                Se a resposta não estiver no contexto, responda honestamente que não possui essa informação no momento.
-
-                CONTEXTO RECUPERADO:
-                {context}
-
-                PERGUNTA DO USUÁRIO:
-                {question}
-                """;
-
-        return chatClient.prompt()
-                .user(userSpec -> userSpec.text(promptTemplate)
-                        .param("context", context.toString())
-                        .param("question", userQuestion))
+        String answer = chatClientBuilder.build()
+                .prompt()
+                .user(prompt)
                 .call()
                 .content();
+
+        return Map.of(
+                "answer", answer,
+                "sourceArticles", sourceTitles
+        );
     }
 }

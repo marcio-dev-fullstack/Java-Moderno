@@ -1,61 +1,30 @@
-# 🚀 Dev Knowledge AI Hub (`dev-knowledge-ai-hub`)
+# 🚀 Dev Knowledge AI Hub (v3 - JWT Security Enabled)
 
-> **Projeto Exemplo Integrando as 6 Etapas do Guia do Engenheiro Java Moderno**
-
-API backend desenvolvida em **Java 21 (LTS)** com **Spring Boot 3**, **Spring AI (RAG & Tool Calling)**, **PostgreSQL (pgvector)**, **Redis**, **Kafka**, **Docker/Kubernetes** e **CI/CD no GitHub Actions**.
+Uma API RESTful robusta desenvolvida em **Java 21 LTS** seguindo as **6 Etapas do Guia do Engenheiro Java Moderno**, incorporando **Spring Security com Autenticação Stateless JWT**, **Spring AI (RAG + pgvector)**, **Kafka** e **Docker/CI/CD**.
 
 ---
 
-## 📌 Visão Geral das 6 Etapas
+## 🔑 Novidades na Versão v3: Autenticação JWT
 
-1. **Core Java (Java Essencial)**: Uso de **Java 21**, **Virtual Threads (Loom)** para altíssima concorrência, imutabilidade com **Records**, **Pattern Matching** e **Streams API**.
-2. **Backend com Spring**: **Spring Boot 3.3**, REST APIs padronizadas, **Spring Data JPA** com Hibernate e **Spring Security** stateless via **JWT**.
-3. **Dados & Mensageria**: Banco de dados **PostgreSQL** com suporte a **pgvector** para embeddings de IA, cache de alta velocidade com **Redis** e mensageria assíncrona orientada a eventos com **Apache Kafka**.
-4. **Cloud & DevOps**: empacotamento **Docker** com build multi-stage, orquestração local com `docker-compose`, manifestos para **Kubernetes** (`k8s/`) e esteira **CI/CD** no **GitHub Actions** (`.github/workflows/ci.yml`).
-5. **IA em Java**: Integração nativa com **Spring AI**, **RAG (Retrieval-Augmented Generation)** com busca vetorial no pgvector e **Tool Calling (MCP)** permitindo que a IA invoque serviços Java.
-6. **Excelência em Produção**: Suíte de testes com **JUnit 5**, **Mockito** e **Testcontainers** (subindo containers reais de Postgres e Kafka durante a integração), observabilidade completa com **Actuator + Micrometer + Prometheus**.
+- **Registrar usuário**: `POST /api/v1/auth/register` (recebe token JWT)
+- **Autenticar usuário**: `POST /api/v1/auth/login` (retorna o Bearer token)
+- **Proteção dos Endpoints**:
+  - `GET /api/v1/articles` -> Público
+  - `POST /api/v1/articles` -> Exige token `Bearer <JWT_TOKEN>` (`ROLE_USER` / `ROLE_ADMIN`)
+  - `POST /api/v1/ai/ask` -> Exige token `Bearer <JWT_TOKEN>` (`ROLE_USER` / `ROLE_ADMIN`)
+  - `Swagger UI` e `Actuator` -> Públicos para testes e monitoramento.
 
 ---
 
-## 🛠️ Como Executar Localmente
+## ⚡ Como Rodar Localmente
 
-### Pré-requisitos
-* **Java 21** ou superior instalados
-* **Maven 3.9+**
-* **Docker** e **Docker Compose**
-
-### 1. Iniciar a Infraestrutura (Postgres + pgvector, Redis, Kafka)
 ```bash
+# 1. Subir a infraestrutura (Postgres + pgvector, Redis, Kafka)
 docker-compose up -d
+
+# 2. Executar a aplicação Spring Boot 3.3 (Java 21 com Virtual Threads)
+./mvnw spring-boot:run
 ```
 
-### 2. Compilar e Executar a Aplicação Java
-```bash
-mvn clean package
-java -jar target/dev-knowledge-ai-hub-1.0.0-SNAPSHOT.jar
-```
-*A aplicação estará rodando em:* `http://localhost:8080`
-
----
-
-## 📡 Endpoints Principais (API REST)
-
-| Método | Endpoint | Descrição | Estágio do Guia |
-|---|---|---|---|
-| `POST` | `/api/v1/articles` | Cadastra um novo artigo técnico e dispara evento no Kafka | Backend Spring + Kafka |
-| `GET` | `/api/v1/articles` | Lista artigos usando Java 21 Streams e Records | Core Java 21 |
-| `POST` | `/api/v1/ai/ask` | Consulta o assistente de IA via RAG e Tool Calling | IA em Java (Spring AI) |
-| `GET` | `/actuator/health` | Status de saúde da aplicação e métricas | Produção & Observabilidade |
-
----
-
-## 🧪 Executando Testes de Integração (Testcontainers)
-
-```bash
-mvn test
-```
-
----
-
-## 📄 Licença
-Distribuído sob a licença MIT. Sinta-se à vontade para utilizar como base de estudo ou template no GitHub!
+Acesse o Swagger com suporte ao botão **Authorize (Bearer Token)**:
+`http://localhost:8080/swagger-ui.html`
