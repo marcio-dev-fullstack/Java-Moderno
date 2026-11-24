@@ -1,4 +1,4 @@
-# Dev Knowledge AI Hub
+# Dev Knowledge AI Hub (Central de Conhecimento em IA para Desenvolvedores)
 > Aplicação Backend Enterprise baseada em **O Guia do Engenheiro Java Moderno**, integrando Java 21 LTS, Virtual Threads, Spring Boot 3.3, Segurança JWT, Cache com Redis, Spring AI com RAG e Vector DB (PostgreSQL pgvector), Mensageria Kafka, Ollama local, CI/CD, Kubernetes, GitHub Codespaces e Observabilidade com Prometheus + Grafana.
 
 ---
